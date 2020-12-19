@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康因子</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font-awesome/css/font-awesome.min.css' %}">
+    <script src="{% static 'js/jquery-3.5.1.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/echarts.js' %}"></script>
+</head>
+
+
+<body>
+    <div class="row">
+        <div class="col col-sm-4" style=" height: 500px;">
+            <div class="d-flex justify-content-between" style="padding-left: 15px;">
+                <h4><span style="color:steelblue;">健康因子</span></h4>
+                <button class="btn btn-primary" onclick="refreshChart()"><i class="fa fa-rotate-right"></i>刷新</button>
+            </div>
+            <div class="row d-flex justify-content-center" id="mainChart" style="height: 280px;width: 90%; ">
+
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        //主机与子系统分成两个表格分别初始化
+        var mainChart = echarts.init(document.getElementById("mainChart"));
+        var chartData;
+        //整机表盘设置
+        var option = {
+            title: {
+                text: '系统健康得分',
+                top: 10,
+                left: 10
+            },
+            tooltip: {
+                confine: true,
+                triggerOn: 'click'
+            },
+            legend: {
+                bottom: 10,
+                data: ['子系统健康得分']
+            },
+            radar: {
+                indicator: [
+                    {text: '子系统1', max: 100},
+                    {text: '子系统2', max: 100},
+                    {text: '子系统3', max: 100},
+                    {text: '子系统4', max: 100},
+                    {text: '子系统5', max: 100}
+                ]
+            },
+            series: {
+                name: '系统健康得分',
+                type: 'radar',
+                symbol: 'none',
+                lineStyle: {
+                    width: 1
+                },
+                emphasis: {
+                    areaStyle: {
+                        color: 'rgba(96,157,250,0.8)'
+                    }
+                },
+                data: [{
+                    value: [
+
+                    ],
+                    name: "子系统健康得分"
+                }]
+            }
+        };
+        mainChart.setOption(option);
+        //subChart.setOption(subOption);
+
+        function refreshChart() {
+            mainChart.showLoading();
+            $.ajax({
+                url: "/refresh/",
+                type: 'POST',
+                processData: false,
+                contentType: false,
+                traditional: true,
+                datatype: 'json',
+                cache: false,
+                async: false,
+                success: function (data) {
+                    chartData = JSON.parse(data);
+
+                },
+                error: function (request) {
+                    alert('发送请求失败');
+                },
+
+            });
+            console.log(chartData['whole_score']);
+            mainChart.hideLoading();
+            console.log( option.series.data.value);
+            option.radar.indicator = [];
+            for(var i=0;i<chartData['polar_data'].length;i++){
+                option.radar.indicator.push({text: chartData['polar_data'][i], max: 100});
+            }
+            option.series.data[0].value = chartData['value_data'];
+            mainChart.setOption(option);
+            console.log('ok2');
+        }
+    </script>
+</body>
+
+</html>
