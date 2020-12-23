@@ -10,96 +10,132 @@
     <link rel="stylesheet" href="{% static 'font-awesome/css/font-awesome.min.css' %}">
     <script src="{% static 'js/jquery-3.5.1.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.js' %}"></script>
-    <script src="{% static 'js/echarts.js' %}"></script>
+    <script src="{% static 'js/echarts4.9.0.js' %}"></script>
+    <style>
+        /*大标题*/
+        .ate-big-header {
+            width: 180px;
+            height: 30px;
+            text-align: center;
+            font: normal normal bold 22px/26px Arial;
+            letter-spacing: 0px;
+            color: #0054DC;
+            opacity: 1;
+        }
+    </style>
 </head>
-
-
 <body>
-<div class="row">
-    <div class="col col-sm-12">
-        <div class="row d-flex justify-content-between" style="padding-left: 15px;">
-            <h4><span style="color:steelblue;">健康因子</span></h4>
-            <button class="btn btn-primary" onclick="refreshChart()"><i class="fa fa-rotate-right"></i>刷新</button>
-        </div>
-        <div class="row d-flex justify-content-center" id="mainChart" style="height: 500px;width: 900px; ">
 
+<div class="row d-flex justify-content-between align-items-center" style="width:100%; ">
+    <div class="ate-big-header " style="">健康因子</div>
+    <button class="btn btn-primary" onclick="refreshChart()"><i class="fa fa-rotate-right"></i>刷新</button>
+    <div class="col-12" style="border-top: 1px solid #DADEE6; ">
+        <div id="mainChart" style="top: 10px">
         </div>
     </div>
 </div>
 <script type="text/javascript">
-    //主机与子系统分成两个表格分别初始化
-    var mainChart = echarts.init(document.getElementById("mainChart"));
+    var mainChart = document.getElementById("mainChart");
+    mainChart.style.height = 0.8 * window.innerHeight + 'px';
+    mainChart.style.width = 0.8 * window.innerWidth + 'px';
+    mainChart = echarts.init(mainChart);
+    var refreshTime = '';
     var chartData;
     var wholeScore = 0;
-    var indicatorData = [
-                {text: '子系统1', max: 120},
-                {text: '子系统2', max: 120},
-                {text: '子系统3', max: 120},
-                {text: '子系统4', max: 120},
-                {text: '子系统5', max: 120},
-            ];
     var option = {
         title: [{
+            //左上角大号主标题
             text: '系统健康得分',
-            top: 10,
-            left: 10
+            top: 20,
+            left: 30,
+            textStyle: {
+                fontFamily: 'Microsoft YaHei',
+                fontSize: 25,
+            },
+            //左上角副标题
+            subtext: '更新时间:' + ' ' + '尚未更新'
+
+        }, {
+            //雷达图中心显示，利用标题动态更新实现显示
+            text: '整机得分' + '\n' + 0,
+            top: 'center',
+            left: 'center',
+            zlevel: 24,
         },
-            {
-                text: '整机得分：\n' + wholeScore,
-                top: 'center',
-                left: 'center',
-                textStyle: {
-                    color: "rgb(51,51,51)",
-                    fontSize: 15
-                },
-            }
         ],
+        //提示工具
         tooltip: {
-            confine: true,
-            triggerOn: 'click'
-        },
-        legend: {
-            bottom: 10,
-            data: ['子系统健康得分']
+            confine: true,//将提示工具限制在图标内
+            triggerOn: 'mousemove'//鼠标移动触发
         },
         radar: {
-            indicator: indicatorData,
-            splitNumber: 1,
-            radius: [200],
-            center:['50%','50%']
+            //每个角点的标识，每个轴最大值为100
+            indicator: [
+                {text: '子系统1', max: 100},
+                {text: '子系统2', max: 100},
+                {text: '子系统3', max: 100},
+                {text: '子系统4', max: 100},
+                {text: '子系统5', max: 100},
+            ],
+            //['内半径'，'外半径']
+            radius: ['20%', '90%'],
+            //雷达中心位置
+            center: ['50%', '50%'],
+            startAngle: 90,
+            name: {
+                textStyle: {
+                    color: '#000',
+                    fontSize:10,
+                }
+            },
         },
-        series: (function () {
-            var series = [];
-            for (var i=1;i<10;i++)
-            {
-                series.push({
-                    name: '雷达线'+i,
-                    type: 'radar',
-                    symbol: 'none',
-                    lineStyle: {
-                        width: 1,
-                    },
-                    data: [
-                        {
-                            value: (function () {
-                                var value = [];
-                                for (var j=0;j<indicatorData.length;j++){
-                                    value.push(10*i + 20)
-                                }
-                                return value
-                            })(),
-                            name : "雷达线" + i + "数据"
-                        }
-                    ],
-                });
-            }
-           return series
-        })()
+        series: {
+            name: '系统健康得分',
+            type: 'radar',
+            symbol: 'circle',
+            symbolSize: 5,
+            label: {
+                show: true,
+                color: '#000'
+            },
+            itemStyle: {
+                color: '#94b6ff'
+            },
+            lineStyle: {
+                normal: {
+                    color: '#fffbff',
+                },
+            },
+            data: [{
+                value: [0, 0, 0, 0, 0],
+                name: "子系统健康得分"
+            }],
+            zlevel: 10,
+            areaStyle: {
+                color: {
+                    type: 'radial',
+                    x: 0.5,
+                    y: 0.5,
+                    r: 0.5,
+                    colorStops: [{
+                        offset: 0, color: '#fff' // 0% 处的颜色
+                    }, {
+                        offset: 1, color: '#86a3ff' // 100% 处的颜色
+                    }],
+                    global: false // 缺省为 false
+                }
+            },
+        }
     };
     mainChart.setOption(option);
+    //设置获取的时间每秒更新
+    setInterval(function () {
+        var time = new Date();
+        refreshTime = time.toLocaleString();
+        //console.log(refreshTime)
+    }, 1000);
 
-    //subChart.setOption(subOption);
-
+    //更新雷达图
     function refreshChart() {
         mainChart.showLoading();
         $.ajax({
@@ -113,7 +149,6 @@
             async: false,
             success: function (data) {
                 chartData = JSON.parse(data);
-
             },
             error: function (request) {
                 alert('发送请求失败');
@@ -124,12 +159,15 @@
         mainChart.hideLoading();
         console.log(option.series.data.value);
         option.radar.indicator = [];
-        for (var i = 0; i < chartData['polar_data'].length; i++) {
-            option.radar.indicator.push({text: chartData['polar_data'][i], max: 100});
+        for (var i = 0; i < chartData['indicator_data'].length; i++) {
+            option.radar.indicator.push({text: chartData['indicator_data'][i], max: 100});
         }
         option.series.data[0].value = chartData['value_data'];
+        wholeScore = chartData['whole_score'];
+        option.title[1].text = '整机得分' + '\n' + wholeScore;
+        option.title[0].subtext = '更新时间：' + refreshTime;
         mainChart.setOption(option);
-        console.log('ok2');
+        console.log(refreshTime);
     }
 </script>
 </body>
